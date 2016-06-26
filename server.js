@@ -26,6 +26,14 @@ server.register(inert, err => {
     }
   });
 
+  server.route({
+    method: 'GET',
+    path: '/',
+    handler: {
+      file: 'demos/index.html'
+    }
+  });
+
   server.start(err => {
     if(err) {
       throw err;
