@@ -34,6 +34,26 @@ server.register(inert, err => {
     }
   });
 
+  server.route({
+    method: 'POST',
+    path: '/api/contacts',
+    handler(request, reply) {
+      const data = request.payload;
+      if(data.email === 'mjordan@bulls.com') {
+        return reply({
+          validation: {
+            name: '',
+            email: 'Email is already being used'
+          }
+        }).code(400);
+      }
+      if(data.email === 'lbird@celtics.com') {
+        return reply().code(500);
+      }
+      return reply(data);
+    }
+  });
+
   server.start(err => {
     if(err) {
       throw err;

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form</title>
+  <script src="https://npmcdn.com/@reactivex/rxjs@5.0.0-beta.9/dist/global/Rx.umd.js"></script>
+  <style>
+    label {
+      display: block;
+    }
+    .message {
+      color: #ff0000;
+    }
+  </style>
+</head>
+<body>
+  <form>
+    <div id="form-message" class="message"></div>
+    <div>
+      <label for="name">Name</label>
+      <input type="text" id="name" />
+      <div id="name-message" class="message"></div>
+    </div>
+    <div>
+      <label for="email">Email</label>
+      <input type="text" id="email" />
+      <div id="email-message" class="message"></div>
+    </div>
+    <div>
+      <button>Save</button>
+    </div>
+  </form>
+
+  <script src="index.js"></script>
+</body>
+</html>
