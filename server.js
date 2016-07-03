@@ -53,6 +53,29 @@ server.register(inert, err => {
       return reply(data);
     }
   });
+  
+  server.route({
+    method: 'GET',
+    path: '/api/teams',
+    handler(request, reply) {
+      if(request.headers.authorization === 'Bearer token1') {
+        return reply().code(401);
+      }
+      return reply([
+        { id: 1, city: 'Chicago', name: 'Bulls' },
+        { id: 2, city: 'Los Angeles', name: 'Lakers' },
+        { id: 3, city: 'Phoenix', name: 'Suns' }
+      ]);
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/api/authorization',
+    handler(request, reply) {
+      reply('token2');
+    }
+  });
 
   server.start(err => {
     if(err) {
