@@ -2,6 +2,7 @@
 
 const Hapi = require('hapi');
 const inert = require('inert');
+const _ = require('lodash');
 
 const server = new Hapi.Server();
 
@@ -74,6 +75,41 @@ server.register(inert, err => {
     path: '/api/authorization',
     handler(request, reply) {
       reply('token2');
+    }
+  });
+  
+  server.route({
+    method: 'GET',
+    path: '/api/scores',
+    handler(request, reply) {
+      const scores = [
+        {
+          home: { name: 'Lakers', score: 4 },
+          visitor: { name: 'Warriors', score: 2 },
+          time: '10:45 1st'
+        },
+        {
+          home: { name: 'Lakers', score: 40 },
+          visitor: { name: 'Warriors', score: 45 },
+          time: '6:30 2nd'
+        },
+        {
+          home: { name: 'Lakers', score: 88 },
+          visitor: { name: 'Warriors', score: 100 },
+          time: '1:10 3rd'
+        },
+        {
+          home: { name: 'Lakers', score: 92 },
+          visitor: { name: 'Warriors', score: 107 },
+          time: '8:11 4th'
+        },
+        {
+          home: { name: 'Lakers', score: 101 },
+          visitor: { name: 'Warriors', score: 119 },
+          time: 'F'
+        }
+      ];
+      reply(scores[_.random(0, 4)]);
     }
   });
 

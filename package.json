@@ -11,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "hapi": "^13.4.1",
-    "inert": "^4.0.0"
+    "inert": "^4.0.0",
+    "lodash": "^4.13.1"
   }
 }
