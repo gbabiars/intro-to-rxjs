@@ -7,13 +7,11 @@ const clicksArray = Array.from(document.querySelectorAll('#refresh a'))
 
 const selections = Observable.merge(...clicksArray)
   .map(event => parseInt(event.target.attributes.getNamedItem('data-interval').value, 10))
-  .startWith(1)
-  .share();
+  .startWith(1);
 
-const interval = selections.mergeMap(
+const interval = selections.switchMap(
   time => Observable.interval(time * 1000)
     .startWith(null)
-    .takeUntil(selections)
 );
 
 const responses = interval
