@@ -112,6 +112,15 @@ server.register(inert, err => {
       reply(scores[_.random(0, 4)]);
     }
   });
+  
+  server.route({
+    method: 'POST',
+    path: '/api/clicks',
+    handler(request, reply) {
+      const clicks = request.payload.clicks;
+      reply('');
+    }
+  });
 
   server.start(err => {
     if(err) {
