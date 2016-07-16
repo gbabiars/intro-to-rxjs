@@ -9,13 +9,15 @@ Observable.fromEvent(targetElement, 'click')
   .do(clicks => countElement.textContent = clicks)
   .throttleTime(1000)
   .mergeMap(clicks =>
-    Observable.fromPromise(
-      $.ajax({
-        url: '/api/clicks',
-        method: 'POST',
-        data: { clicks }
-      })
-    )
+    Observable.ajax({
+      url: '/api/clicks',
+      method: 'POST',
+      body: JSON.stringify({ clicks }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      responseType: 'text'
+    })
   )
-  .do(message => messageElement.textContent = message)
+  .do(res => messageElement.textContent = res.response)
   .subscribe();
