@@ -2,6 +2,7 @@ let clickCount = 0;
 
 const target = document.getElementById('target');
 const count = document.getElementById('count');
+const message = document.getElementById('message');
 
 target.addEventListener('click', () => {
   clickCount += 1;
@@ -13,5 +14,5 @@ target.addEventListener('click', () => {
     data: {
       clicks: clickCount
     }
-  })
+  }).then(text => message.textContent = text);
 });

@@ -118,7 +118,13 @@ server.register(inert, err => {
     path: '/api/clicks',
     handler(request, reply) {
       const clicks = request.payload.clicks;
-      reply('');
+      if(clicks >= 20) {
+        return reply('Great job!');
+      }
+      if(clicks >= 10) {
+        return reply('Doing well!');
+      }
+      return reply('Keep trying.');
     }
   });
 
