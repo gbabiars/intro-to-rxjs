@@ -47,10 +47,6 @@ function renderFormErrorMessage(err) {
 
 
 // name
-const nameBlur$ = fromEvent(name, 'blur')
-  .map(() => true)
-  .startWith(false)
-  .distinctUntilChanged();
 const nameKeyup$ = fromEvent(name, 'keyup');
 const nameKeypress$ = fromEvent(name, 'keypress');
 const nameChange$ = merge(nameKeyup$, nameKeypress$);
@@ -58,21 +54,21 @@ const nameValue$ = nameChange$
   .map(event => event.target.value.trim())
   .startWith('')
   .distinctUntilChanged();
-const nameClientState$ = combineLatest(
-  nameBlur$,
-  nameValue$,
-  (blur, value) => ({
-    blur,
-    value,
-    error: validateName(value)
-  })
-);
+const nameClientState$ = nameValue$
+  .map(value => ({ value, error: validateName(value) }));
+
+
+
 
 // email
 const emailBlur$ = fromEvent(email, 'blur')
   .map(() => true)
   .startWith(false)
   .distinctUntilChanged();
+
+
+
+
 const emailKeyup$ = fromEvent(email, 'keyup');
 const emailKeypress$ = fromEvent(email, 'keypress');
 const emailChange$ = merge(emailKeyup$, emailKeypress$);
@@ -80,15 +76,8 @@ const emailValue$ = emailChange$
   .map(event => event.target.value.trim())
   .startWith('')
   .distinctUntilChanged();
-const emailClientState$ = combineLatest(
-  emailBlur$,
-  emailValue$,
-  (blur, value) => ({
-    blur,
-    value,
-    error: validateEmail(value)
-  })
-);
+const emailClientState$ = emailValue$
+  .map(value => ({ value, error: validateEmail(value) }));
 
 
 // form events
@@ -109,6 +98,11 @@ const formValidSubmitWithState$ = formSubmitWithState$
   .filter(({ name, email }) => name.error === '' && email.error === '');
 const formRequestValues$ = formValidSubmitWithState$
   .map(({ name, email }) => ({ name: name.value, email: email.value }));
+
+
+
+
+
 
 
 // ajax
@@ -133,6 +127,13 @@ const serverFormErrors$ = response$
 
 
 
+
+const nameBlur$ = fromEvent(name, 'blur');
+const nameTrackingState$ = merge(nameBlur$, formSubmit$)
+  .map(() => true)
+  .distinctUntilChanged();
+
+
 // combine errors
 const nameServerErrors$ = serverValidationErrors$
   .map(errors => errors.name);
@@ -140,6 +141,19 @@ const nameClientErrors$ = nameClientState$
   .map(state => state.error);
 const nameErrors$ = merge(nameClientErrors$, nameServerErrors$)
   .distinctUntilChanged();
+
+
+const nameErrorsWithTrackingState$ = nameErrors$
+  .combineLatest(
+    nameTrackingState$,
+    err => err
+  );
+
+const name$ = nameErrorsWithTrackingState$.do(renderNameErrorMessage);
+
+
+
+
 
 const emailServerErrors$ = serverValidationErrors$
   .map(errors => errors.email);
@@ -149,7 +163,19 @@ const emailErrors$ = merge(emailClientErrors$, emailServerErrors$)
   .distinctUntilChanged();
 
 
+// nameTrackingState$.subscribe(log);
+// nameErrors$.subscribe(log);
+nameErrorsWithTrackingState$.subscribe(log);
+
+
+const form$ = merge(
+  name$
+);
+
+
 form$.subscribe();
+
+
 
 
 
