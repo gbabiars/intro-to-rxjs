@@ -132,11 +132,24 @@ const formMessage$ = response$
   .do(err => formMessage.textContent = err);
 
 
+const success$ = response$
+  .filter(res => res.status === 200)
+  .map(res => res.response);
+
+const successMessage$ = success$
+  .do(data => {
+    form.remove();
+    let successMessage = document.createElement('div');
+    successMessage.innerText = `${data.name} was created!`;
+    document.body.appendChild(successMessage);
+  });
+
+
 const form$ = merge(
   name$,
   email$,
   formMessage$
-);
+).takeUntil(successMessage$);
 
 
 form$.subscribe();
