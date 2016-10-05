@@ -84,14 +84,9 @@ const response$ = request$
   .share();
 
 
-
 const serverValidationErrors$ = response$
   .filter(res => res.status === 400 && res.xhr.response.validation)
   .map(res => res.xhr.response.validation);
-
-const serverFormErrors$ = response$
-  .filter(res => res.status !== 200 && res.status !== 400)
-  .map(res => res.xhr.statusText);
 
 
 const nameTrackingState$ = fromEvent(name, 'blur')
@@ -131,9 +126,16 @@ const email$ = emailErrorWithTrackingState$
   .do(err => emailMessage.textContent = err);
 
 
+const formMessage$ = response$
+  .filter(res => res.status !== 200 && res.status !== 400)
+  .map(res => res.xhr.statusText)
+  .do(err => formMessage.textContent = err);
+
+
 const form$ = merge(
   name$,
-  email$
+  email$,
+  formMessage$
 );
 
 
