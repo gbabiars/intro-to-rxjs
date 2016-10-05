@@ -1,9 +1,6 @@
 const Observable = Rx.Observable;
 const { fromEvent, merge, combineLatest, ajax, of } = Observable;
 
-const log = data => console.log(data);
-
-
 // elements
 const form = document.querySelector('form');
 const name = document.getElementById('name');
@@ -33,179 +30,111 @@ function validateEmail(email) {
   return '';
 }
 
-function renderNameErrorMessage(err) {
-  nameMessage.textContent = err;
-}
 
-function renderEmailErrorMessage(err) {
-  emailMessage.textContent = err;
-}
-
-function renderFormErrorMessage(err) {
-  formMessage.textContent = err;
-}
-
-
-// name
-const nameKeyup$ = fromEvent(name, 'keyup');
-const nameKeypress$ = fromEvent(name, 'keypress');
-const nameChange$ = merge(nameKeyup$, nameKeypress$);
-const nameValue$ = nameChange$
+const nameClientState$ = fromEvent(name, 'keyup')
+  .merge(fromEvent(name, 'keypress'))
   .map(event => event.target.value.trim())
   .startWith('')
-  .distinctUntilChanged();
-const nameClientState$ = nameValue$
+  .distinctUntilChanged()
   .map(value => ({ value, error: validateName(value) }));
 
-
-
-
-// email
-const emailBlur$ = fromEvent(email, 'blur')
-  .map(() => true)
-  .startWith(false)
-  .distinctUntilChanged();
-
-
-
-
-const emailKeyup$ = fromEvent(email, 'keyup');
-const emailKeypress$ = fromEvent(email, 'keypress');
-const emailChange$ = merge(emailKeyup$, emailKeypress$);
-const emailValue$ = emailChange$
+const emailClientState$ = fromEvent(email, 'keyup')
+  .merge(fromEvent(email, 'keypress'))
   .map(event => event.target.value.trim())
   .startWith('')
-  .distinctUntilChanged();
-const emailClientState$ = emailValue$
+  .distinctUntilChanged()
   .map(value => ({ value, error: validateEmail(value) }));
 
 
-// form events
+const formSubmit$ = fromEvent(form, 'submit')
+  .do(event => event.preventDefault())
+  .share();
+
 const formData$ = combineLatest(
   nameClientState$,
   emailClientState$,
   (name, email) => ({ name, email })
 );
-const formSubmit$ = fromEvent(form, 'submit')
-  .do(event => event.preventDefault())
-  .share();
-const formSubmitWithState$ = formSubmit$
+
+const request$ = formSubmit$
   .withLatestFrom(
     formData$,
     (event, data) => data
-  );
-const formValidSubmitWithState$ = formSubmitWithState$
-  .filter(({ name, email }) => name.error === '' && email.error === '');
-const formRequestValues$ = formValidSubmitWithState$
-  .map(({ name, email }) => ({ name: name.value, email: email.value }));
+  )
+  .filter(
+    ({ name, email}) => !name.error && !email.error
+  )
+  .map(({ name, email }) => ({
+    url: '/api/contacts',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: name.value,
+      email: email.value
+    })
+  }));
 
-
-
-
-
-
-
-// ajax
-const response$ = formRequestValues$
-  .switchMap(data =>
-    ajax({
-      url: '/api/contacts',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    }).catch(ajaxError => of(ajaxError))
+const response$ = request$
+  .switchMap(request =>
+    ajax(request)
+      .catch(ajaxError => of(ajaxError))
   )
   .share();
+
+
+
 const serverValidationErrors$ = response$
   .filter(res => res.status === 400 && res.xhr.response.validation)
   .map(res => res.xhr.response.validation);
+
 const serverFormErrors$ = response$
   .filter(res => res.status !== 200 && res.status !== 400)
   .map(res => res.xhr.statusText);
 
 
-
-
-const nameBlur$ = fromEvent(name, 'blur');
-const nameTrackingState$ = merge(nameBlur$, formSubmit$)
+const nameTrackingState$ = fromEvent(name, 'blur')
+  .merge(formSubmit$)
   .map(() => true)
   .distinctUntilChanged();
-
-
-// combine errors
-const nameServerErrors$ = serverValidationErrors$
+const nameServerError$ = serverValidationErrors$
   .map(errors => errors.name);
-const nameClientErrors$ = nameClientState$
-  .map(state => state.error);
-const nameErrors$ = merge(nameClientErrors$, nameServerErrors$)
+const nameError$ = nameClientState$
+  .map(state => state.error)
+  .merge(nameServerError$)
   .distinctUntilChanged();
-
-
-const nameErrorsWithTrackingState$ = nameErrors$
+const nameErrorWithTrackingState$ = nameError$
   .combineLatest(
     nameTrackingState$,
     err => err
   );
+const name$ = nameErrorWithTrackingState$
+  .do(err => nameMessage.textContent = err);
 
-const name$ = nameErrorsWithTrackingState$.do(renderNameErrorMessage);
-
-
-
-
-
-const emailServerErrors$ = serverValidationErrors$
-  .map(errors => errors.email);
-const emailClientErrors$ = emailClientState$
-  .map(state => state.error);
-const emailErrors$ = merge(emailClientErrors$, emailServerErrors$)
+const emailTrackingState$ = fromEvent(email, 'blur')
+  .merge(formSubmit$)
+  .map(() => true)
   .distinctUntilChanged();
-
-
-// nameTrackingState$.subscribe(log);
-// nameErrors$.subscribe(log);
-nameErrorsWithTrackingState$.subscribe(log);
+const emailServerError$ = serverValidationErrors$
+  .map(errors => errors.email);
+const emailError$ = emailClientState$
+  .map(state => state.error)
+  .merge(emailServerError$)
+  .distinctUntilChanged();
+const emailErrorWithTrackingState$ = emailError$
+  .combineLatest(
+    emailTrackingState$,
+    err => err
+  );
+const email$ = emailErrorWithTrackingState$
+  .do(err => emailMessage.textContent = err);
 
 
 const form$ = merge(
-  name$
+  name$,
+  email$
 );
 
 
 form$.subscribe();
-
-
-
-
-
-// const response = formSubmit
-//   .map(() => {
-//     return {
-//       name: getValueForInput(name),
-//       email: getValueForInput(email)
-//     };
-//   })
-//   .filter(({ name, email }) => {
-//     return validateName(name) === '' && validateEmail(email) === '';
-//   })
-//   .mergeMap(data => Observable.ajax({
-//       url: '/api/contacts',
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify(data)
-//     })
-//       .catch(ajaxError => Observable.of(ajaxError))
-//   )
-//   .share();
-//
-// const responseSuccess = response
-//   .filter(res => res.status === 200)
-//   .map(res => res.response);
-// const responseValidationErrors = response
-//   .filter(res => res.status === 400 && res.xhr.response.validation)
-//   .map(res => res.xhr.response.validation);
-// const responseServerErrors = response
-//   .filter(res => res.status !== 200 && res.status !== 400);
